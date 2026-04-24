@@ -116,14 +116,23 @@ Role-based access (planned / expandable)
 
 📌 Example Endpoints
 Auth
+
 POST /api/Auth/register
+
 POST /api/Auth/login
+
 Characters
+
 GET /api/Character
+
 POST /api/Character
+
 PUT /api/Character
+
 DELETE /api/Character
+
 Items / Enemies / Bosses
+
 CRUD endpoints available under respective controllers
 
 
