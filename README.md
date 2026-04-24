@@ -72,16 +72,27 @@ DTO mapping via AutoMapper
 📁 Project Structure
 
 DiceBound
+
 │
+
 ├── Controllers
+
 ├── DTOs
+
 ├── Entities
+
 ├── Services
+
 ├── Interfaces
+
 ├── Repositories
+
 ├── Data (DbContext)
+
 ├── MappingProfiles
+
 └── Program.c
+
 
 ⚙️ Setup & Run
 1. Clone project
