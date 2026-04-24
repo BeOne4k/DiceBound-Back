@@ -91,7 +91,7 @@ DiceBound
 
 ├── MappingProfiles
 
-└── Program.c
+└── Program.cs
 
 
 ⚙️ Setup & Run
