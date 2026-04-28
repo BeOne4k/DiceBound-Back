@@ -20,9 +20,11 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto> RegisterAsync(RegisterDto dto)
     {
-        var users = await _unitOfWork.Repository<User>().GetAllAsync();
+        var userRepo = _unitOfWork.Repository<User>();
 
-        if (users.Any(u => u.Email == dto.Email))
+        var existingUsers = await userRepo.GetAllAsync();
+
+        if (existingUsers.Any(u => u.Email == dto.Email))
             throw new Exception("User already exists");
 
         var user = new User
@@ -32,7 +34,7 @@ public class AuthService : IAuthService
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password)
         };
 
-        await _unitOfWork.Repository<User>().AddAsync(user);
+        await userRepo.AddAsync(user);
         await _unitOfWork.SaveAsync();
 
         return new AuthResponseDto
@@ -43,7 +45,9 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponseDto?> LoginAsync(LoginDto dto)
     {
-        var users = await _unitOfWork.Repository<User>().GetAllAsync();
+        var userRepo = _unitOfWork.Repository<User>();
+
+        var users = await userRepo.GetAllAsync();
 
         var user = users.FirstOrDefault(u => u.Email == dto.Email);
         if (user == null) return null;
@@ -65,13 +69,24 @@ public class AuthService : IAuthService
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-        var claims = new[]
+        var claims = new List<Claim>
         {
+            // 🔥 ГЛАВНЫЙ ID (ТО ЧТО ТЕБЕ НУЖНО ДЛЯ /my)
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Email, user.Email)
+
+            // 🔥 стандарт JWT subject (очень важно)
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+
+            // email
+            new Claim(ClaimTypes.Email, user.Email),
+
+            // optional
+            new Claim("username", user.Username)
         };
 
         var token = new JwtSecurityToken(
+            issuer: _config["Jwt:Issuer"],
+            audience: _config["Jwt:Audience"],
             claims: claims,
             expires: DateTime.UtcNow.AddDays(7),
             signingCredentials: creds

@@ -2,9 +2,9 @@
 {
     public class CreateCharacterDto
     {
-        public Guid UserId { get; set; }
-        public Guid RaceId { get; set; }
-
         public string Name { get; set; } = null!;
+        public Guid RaceId { get; set; }
+        // UserId устанавливается контроллером из JWT-токена, не из тела запроса
+        public Guid UserId { get; set; }
     }
 }

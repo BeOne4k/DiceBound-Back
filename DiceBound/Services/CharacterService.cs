@@ -2,6 +2,7 @@
 using DiceBound.DTOs.Character;
 using DiceBound.Entity_s.Characters;
 using DiceBound.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 public class CharacterService : ICharacterService
 {
@@ -13,6 +14,7 @@ public class CharacterService : ICharacterService
         _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
+
 
     public async Task<IEnumerable<CharacterDto>> GetAllAsync()
     {
@@ -77,5 +79,14 @@ public class CharacterService : ICharacterService
         await _unitOfWork.SaveAsync();
 
         return true;
+    }
+
+    public async Task<List<CharacterDto>> GetByUserIdAsync(Guid userId)
+    {
+        var characters = await _unitOfWork
+            .Repository<Character>()
+            .FindAsync(x => x.UserId == userId);
+
+        return _mapper.Map<List<CharacterDto>>(characters);
     }
 }

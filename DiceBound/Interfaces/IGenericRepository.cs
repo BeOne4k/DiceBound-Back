@@ -1,4 +1,5 @@
 ﻿using DiceBound.Common;
+using System.Linq.Expressions;
 
 namespace DiceBound.Interfaces
 {
@@ -9,5 +10,6 @@ namespace DiceBound.Interfaces
         Task AddAsync(T entity);
         void Update(T entity);
         void Delete(T entity);
+        Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
     }
 }

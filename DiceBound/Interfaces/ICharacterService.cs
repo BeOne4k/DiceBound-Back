@@ -7,4 +7,6 @@ public interface ICharacterService
     Task<CharacterDto> CreateAsync(CreateCharacterDto dto);
     Task<CharacterDto?> UpdateAsync(UpdateCharacterDto dto);
     Task<bool> DeleteAsync(Guid id);
+    // Исправлено: было string, стало Guid
+    Task<List<CharacterDto>> GetByUserIdAsync(Guid userId);
 }
