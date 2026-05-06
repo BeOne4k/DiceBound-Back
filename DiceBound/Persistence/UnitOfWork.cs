@@ -51,5 +51,7 @@ namespace DiceBound.Persistence
 
             throw new NotImplementedException($"No repository for {typeof(T).Name}");
         }
+
+        public DiceBoundDbContext DbContext => _context;
     }
 }

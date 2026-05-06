@@ -2,6 +2,7 @@
 using DiceBound.Entity_s.Characters;
 using DiceBound.Entity_s.Identity;
 using DiceBound.Entity_s.Items;
+using DiceBound.Persistence;
 
 namespace DiceBound.Interfaces
 {
@@ -15,5 +16,7 @@ namespace DiceBound.Interfaces
         Task<int> SaveAsync();
 
         IGenericRepository<T> Repository<T>() where T : BaseEntity;
+
+        DiceBoundDbContext DbContext { get; }
     }
 }

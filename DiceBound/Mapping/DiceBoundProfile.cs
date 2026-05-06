@@ -24,7 +24,9 @@ public class DiceBoundProfile : Profile
         // Character
         CreateMap<Character, CharacterDto>()
             .ForMember(dest => dest.RaceName,
-                       opt => opt.MapFrom(src => src.Race.Name));
+                opt => opt.MapFrom(src => src.Race.Name))
+            .ForMember(dest => dest.Hp,
+                opt => opt.MapFrom(src => src.HP));
 
         CreateMap<CreateCharacterDto, Character>();
 

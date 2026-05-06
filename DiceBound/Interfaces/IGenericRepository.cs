@@ -11,5 +11,7 @@ namespace DiceBound.Interfaces
         void Update(T entity);
         void Delete(T entity);
         Task<IEnumerable<T>> FindAsync(Expression<Func<T, bool>> predicate);
+
+        IQueryable<T> Query();
     }
 }

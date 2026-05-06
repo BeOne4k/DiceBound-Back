@@ -23,7 +23,10 @@ namespace DiceBound.Controllers
         [ProducesResponseType(typeof(IEnumerable<CharacterDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetAll()
-            => Ok(await _characterService.GetAllAsync());
+        {
+            Console.WriteLine(">>> GetAll called");
+            return Ok(await _characterService.GetAllAsync());
+        }
 
         // ВАЖНО: "my" должен быть выше "{id}" чтобы не конфликтовать
         [HttpGet("my")]
@@ -32,11 +35,13 @@ namespace DiceBound.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetMyCharacters()
         {
+            Console.WriteLine(">>> GetMyCharacters called");
             var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            Console.WriteLine(">>> userIdStr: " + userIdStr);
             if (userIdStr == null || !Guid.TryParse(userIdStr, out var userId))
                 return Unauthorized();
-
             var result = await _characterService.GetByUserIdAsync(userId);
+            Console.WriteLine(">>> result count: " + result.Count);
             return Ok(result);
         }
 

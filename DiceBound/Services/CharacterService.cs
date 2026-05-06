@@ -83,10 +83,10 @@ public class CharacterService : ICharacterService
 
     public async Task<List<CharacterDto>> GetByUserIdAsync(Guid userId)
     {
-        var characters = await _unitOfWork
-            .Repository<Character>()
-            .FindAsync(x => x.UserId == userId);
-
+        var characters = await _unitOfWork.DbContext.Set<Character>()
+            .Where(x => x.UserId == userId)
+            .Include(x => x.Race)
+            .ToListAsync();
         return _mapper.Map<List<CharacterDto>>(characters);
     }
 }
