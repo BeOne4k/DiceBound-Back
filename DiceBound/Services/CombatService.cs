@@ -34,7 +34,10 @@ namespace DiceBound.Services
             var enemies = await _unitOfWork.Repository<Enemy>().GetAllAsync();
             var missionEnemies = enemies.Where(e => e.MissionId == mission.Id).ToList();
 
-            var boss = mission.Boss;
+            // mission.Boss не подгружается через FindAsync — загружаем явно
+            Boss? boss = null;
+            if (mission.BossId.HasValue)
+                boss = await _unitOfWork.Repository<Boss>().GetByIdAsync(mission.BossId.Value);
 
             int totalXp = 0;
 
@@ -65,7 +68,7 @@ namespace DiceBound.Services
             int oldLevel = character.Level;
 
             character.Experience += totalXp;
-      
+
             _levelService.ApplyLevelUp(character);
 
             if (character.Level > oldLevel)
@@ -86,7 +89,7 @@ namespace DiceBound.Services
             int charHP = character.HP;
             int enemyHP = enemy.HP;
 
-            logs.Add($" Fight vs {enemy.Name}");
+            logs.Add($" Fight vs {enemy.Name} (AC:{enemy.ArmorClass} HP:{enemyHP}) | Your AC:{character.ArmorClass} HP:{charHP}");
 
             while (charHP > 0 && enemyHP > 0)
             {
@@ -96,17 +99,17 @@ namespace DiceBound.Services
                 {
                     int dmg = _dice.Roll(2, 8);
                     enemyHP -= dmg;
-                    logs.Add($" CRIT! {dmg}");
+                    logs.Add($" CRIT! {dmg} (roll:20)");
                 }
                 else if (roll >= enemy.ArmorClass)
                 {
                     int dmg = _dice.Roll(1, 8);
                     enemyHP -= dmg;
-                    logs.Add($"Hit {dmg}");
+                    logs.Add($"Hit {dmg} (roll:{roll} vs AC:{enemy.ArmorClass})");
                 }
                 else
                 {
-                    logs.Add("Miss");
+                    logs.Add($"Miss (roll:{roll} vs AC:{enemy.ArmorClass})");
                 }
 
                 if (enemyHP <= 0) break;
@@ -117,17 +120,17 @@ namespace DiceBound.Services
                 {
                     int dmg = _dice.Roll(1, 6);
                     charHP -= dmg;
-                    logs.Add($"Enemy hit {dmg}");
+                    logs.Add($"Enemy hit {dmg} (roll:{enemyRoll} vs your AC:{character.ArmorClass})");
                 }
                 else
                 {
-                    logs.Add("Enemy miss");
+                    logs.Add($"Enemy miss (roll:{enemyRoll} vs your AC:{character.ArmorClass})");
                 }
             }
 
             if (charHP > 0)
             {
-                logs.Add($" {enemy.Name} defeated");
+                logs.Add($" {enemy.Name} defeated (HP left: {charHP})");
                 return true;
             }
 
