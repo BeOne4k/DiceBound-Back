@@ -32,6 +32,7 @@
         public DbSet<Boss> Bosses => Set<Boss>();
         public DbSet<Enemy> Enemies => Set<Enemy>();
         public DbSet<CombatLog> CombatLogs => Set<CombatLog>();
+        public DbSet<MissionRewardItem> MissionRewardItems => Set<MissionRewardItem>();
 
         // Payments
         public DbSet<Payment> Payments => Set<Payment>();

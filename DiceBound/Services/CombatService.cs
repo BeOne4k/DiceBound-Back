@@ -1,7 +1,10 @@
 ﻿using DiceBound.DTOs.Combat;
+using DiceBound.DTOs.Mission;
 using DiceBound.Entity_s.Characters;
 using DiceBound.Entity_s.Gameplay;
+using DiceBound.Entity_s.Items;
 using DiceBound.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace DiceBound.Services
 {
@@ -68,7 +71,7 @@ namespace DiceBound.Services
             int oldLevel = character.Level;
 
             character.Experience += totalXp;
-
+      
             _levelService.ApplyLevelUp(character);
 
             if (character.Level > oldLevel)
@@ -77,6 +80,52 @@ namespace DiceBound.Services
             }
 
             await _unitOfWork.SaveAsync();
+
+            // Выдаём предметы-награды миссии в инвентарь персонажа
+            var rewardItems = await _unitOfWork.Repository<MissionRewardItem>()
+                .Query()
+                .Include(r => r.Item)
+                .Where(r => r.MissionId == mission.Id)
+                .ToListAsync();
+
+            foreach (var reward in rewardItems)
+            {
+                // Если предмет уже есть — увеличиваем количество
+                var existing = await _unitOfWork.Repository<InventoryItem>()
+                    .Query()
+                    .FirstOrDefaultAsync(inv => inv.CharacterId == character.Id && inv.ItemId == reward.ItemId);
+
+                if (existing != null)
+                {
+                    existing.Quantity += reward.Quantity;
+                    _unitOfWork.Repository<InventoryItem>().Update(existing);
+                }
+                else
+                {
+                    await _unitOfWork.Repository<InventoryItem>().AddAsync(new InventoryItem
+                    {
+                        CharacterId = character.Id,
+                        ItemId      = reward.ItemId,
+                        Quantity    = reward.Quantity,
+                        IsEquipped  = false
+                    });
+                }
+
+                result.RewardItems.Add(new MissionRewardItemDto
+                {
+                    Id         = reward.Id,
+                    ItemId     = reward.ItemId,
+                    ItemName   = reward.Item?.Name ?? "",
+                    ItemType   = reward.Item?.Type.ToString() ?? "",
+                    ItemRarity = reward.Item?.Rarity.ToString() ?? "",
+                    Quantity   = reward.Quantity
+                });
+
+                result.Logs.Add($"🎁 Received: {reward.Item?.Name ?? "Item"} x{reward.Quantity}");
+            }
+
+            if (rewardItems.Any())
+                await _unitOfWork.SaveAsync();
 
             result.IsWin = true;
             result.GainedXp = totalXp;

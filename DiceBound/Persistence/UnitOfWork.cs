@@ -19,6 +19,7 @@ namespace DiceBound.Persistence
         public IGenericRepository<Mission> Missions { get; }
         public IGenericRepository<Enemy> Enemies { get; }
         public IGenericRepository<InventoryItem> InventoryItems { get; }
+        public IGenericRepository<MissionRewardItem> MissionRewardItems { get; }
 
         public UnitOfWork(DiceBoundDbContext context)
         {
@@ -32,6 +33,7 @@ namespace DiceBound.Persistence
             Missions = new GenericRepository<Mission>(context);
             Enemies = new GenericRepository<Enemy>(context);
             InventoryItems = new GenericRepository<InventoryItem>(context);
+            MissionRewardItems = new GenericRepository<MissionRewardItem>(context);
         }
 
         public async Task<int> SaveAsync()
@@ -50,7 +52,7 @@ namespace DiceBound.Persistence
             if (typeof(T) == typeof(Mission)) return (IGenericRepository<T>)Missions;
             if (typeof(T) == typeof(Enemy)) return (IGenericRepository<T>)Enemies;
             if (typeof(T) == typeof(InventoryItem)) return (IGenericRepository<T>)InventoryItems;
-
+            if (typeof(T) == typeof(MissionRewardItem)) return (IGenericRepository<T>)MissionRewardItems;
 
             throw new NotImplementedException($"No repository for {typeof(T).Name}");
         }

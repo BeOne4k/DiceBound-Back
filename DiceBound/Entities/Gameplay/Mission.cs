@@ -15,6 +15,7 @@ namespace DiceBound.Entity_s.Gameplay
 
         public ICollection<Enemy> Enemies { get; set; } = new List<Enemy>();
         public ICollection<CombatLog> CombatLogs { get; set; } = new List<CombatLog>();
+        public ICollection<MissionRewardItem> RewardItems { get; set; } = new List<MissionRewardItem>();
     }
 
 }

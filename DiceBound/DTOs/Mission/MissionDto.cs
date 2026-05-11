@@ -12,5 +12,8 @@
         public int RewardExperience { get; set; }
 
         public Guid? BossId { get; set; }
+        public string? BossName { get; set; }
+
+        public List<MissionRewardItemDto> RewardItems { get; set; } = new();
     }
 }

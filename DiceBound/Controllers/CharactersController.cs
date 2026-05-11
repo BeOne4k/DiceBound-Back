@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using DiceBound.Entity_s.Characters;
 using System.Security.Claims;
 
 namespace DiceBound.Controllers
@@ -117,6 +118,32 @@ namespace DiceBound.Controllers
                 .ToListAsync();
 
             return Ok(inventoryItems);
+        }
+
+        [HttpDelete("{characterId}/inventory/{inventoryItemId}")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> RemoveInventoryItem(Guid characterId, Guid inventoryItemId)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdStr == null || !Guid.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            // Проверяем что персонаж принадлежит этому юзеру
+            var character = await _unitOfWork.Repository<Character>().GetByIdAsync(characterId);
+            if (character == null || character.UserId != userId)
+                return Forbid();
+
+            var invItem = await _unitOfWork.Repository<InventoryItem>().GetByIdAsync(inventoryItemId);
+            if (invItem == null || invItem.CharacterId != characterId)
+                return NotFound();
+
+            _unitOfWork.Repository<InventoryItem>().Delete(invItem);
+            await _unitOfWork.SaveAsync();
+
+            return Ok();
         }
 
         [HttpDelete("{id}")]

@@ -1,4 +1,6 @@
-﻿namespace DiceBound.DTOs.Combat
+﻿using DiceBound.DTOs.Mission;
+
+namespace DiceBound.DTOs.Combat
 {
     public class CombatResultDto
     {
@@ -7,5 +9,7 @@
         public int GainedXp { get; set; }
 
         public List<string> Logs { get; set; } = new();
+
+        public List<MissionRewardItemDto> RewardItems { get; set; } = new();
     }
 }
