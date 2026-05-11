@@ -1,8 +1,11 @@
 ﻿using DiceBound.DTOs.Character;
+using DiceBound.DTOs.Item;
+using DiceBound.Entity_s.Items;
 using DiceBound.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace DiceBound.Controllers
@@ -13,10 +16,12 @@ namespace DiceBound.Controllers
     public class CharactersController : ControllerBase
     {
         private readonly ICharacterService _characterService;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CharactersController(ICharacterService characterService)
+        public CharactersController(ICharacterService characterService, IUnitOfWork unitOfWork)
         {
             _characterService = characterService;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
@@ -84,6 +89,34 @@ namespace DiceBound.Controllers
             if (result == null)
                 return NotFound();
             return Ok(result);
+        }
+
+        [HttpGet("{id}/inventory")]
+        [Authorize]
+        [ProducesResponseType(typeof(IEnumerable<InventoryItemDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetInventory(Guid id)
+        {
+            var inventoryItems = await _unitOfWork.Repository<InventoryItem>()
+                .Query()
+                .Where(inv => inv.CharacterId == id)
+                .Include(inv => inv.Item)
+                .Select(inv => new InventoryItemDto
+                {
+                    Id         = inv.Id,
+                    ItemId     = inv.ItemId,
+                    Name       = inv.Item.Name,
+                    Type       = inv.Item.Type.ToString(),
+                    Rarity     = inv.Item.Rarity.ToString(),
+                    DiceCount  = inv.Item.DiceCount,
+                    DiceSides  = inv.Item.DiceSides,
+                    Modifier   = inv.Item.Modifier,
+                    IsEquipped = inv.IsEquipped,
+                    Quantity   = inv.Quantity
+                })
+                .ToListAsync();
+
+            return Ok(inventoryItems);
         }
 
         [HttpDelete("{id}")]
