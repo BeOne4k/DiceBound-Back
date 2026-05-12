@@ -1,12 +1,13 @@
 ﻿using DiceBound.DTOs.Character;
 using DiceBound.DTOs.Item;
+using DiceBound.Entities.Enums;
+using DiceBound.Entity_s.Characters;
 using DiceBound.Entity_s.Items;
 using DiceBound.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using DiceBound.Entity_s.Characters;
 using System.Security.Claims;
 
 namespace DiceBound.Controllers
@@ -118,6 +119,103 @@ namespace DiceBound.Controllers
                 .ToListAsync();
 
             return Ok(inventoryItems);
+        }
+
+        // POST api/Characters/{characterId}/inventory/{inventoryItemId}/equip
+        [HttpPost("{characterId}/inventory/{inventoryItemId}/equip")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> EquipItem(Guid characterId, Guid inventoryItemId)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdStr == null || !Guid.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            var character = await _unitOfWork.Repository<Character>().GetByIdAsync(characterId);
+            if (character == null || character.UserId != userId)
+                return Forbid();
+
+            var invItem = await _unitOfWork.Repository<InventoryItem>()
+                .Query()
+                .Include(i => i.Item)
+                .FirstOrDefaultAsync(i => i.Id == inventoryItemId && i.CharacterId == characterId);
+
+            if (invItem == null) return NotFound();
+            if (invItem.IsEquipped) return BadRequest("Item is already equipped");
+
+            // Проверяем: нельзя надеть 2 предмета одного типа
+            var sameTypeEquipped = await _unitOfWork.Repository<InventoryItem>()
+                .Query()
+                .Include(i => i.Item)
+                .AnyAsync(i => i.CharacterId == characterId
+                            && i.IsEquipped
+                            && i.Item.Type == invItem.Item.Type);
+
+            if (sameTypeEquipped)
+                return BadRequest($"A {invItem.Item.Type} is already equipped. Unequip it first.");
+
+            // Применяем бафф к персонажу
+            ApplyItemBuff(character, invItem.Item, equip: true);
+
+            invItem.IsEquipped = true;
+            _unitOfWork.Repository<InventoryItem>().Update(invItem);
+            _unitOfWork.Repository<Character>().Update(character);
+            await _unitOfWork.SaveAsync();
+
+            return Ok(new { message = $"{invItem.Item.Name} equipped", modifier = invItem.Item.Modifier, type = invItem.Item.Type.ToString() });
+        }
+
+        // POST api/Characters/{characterId}/inventory/{inventoryItemId}/unequip
+        [HttpPost("{characterId}/inventory/{inventoryItemId}/unequip")]
+        [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UnequipItem(Guid characterId, Guid inventoryItemId)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (userIdStr == null || !Guid.TryParse(userIdStr, out var userId))
+                return Unauthorized();
+
+            var character = await _unitOfWork.Repository<Character>().GetByIdAsync(characterId);
+            if (character == null || character.UserId != userId)
+                return Forbid();
+
+            var invItem = await _unitOfWork.Repository<InventoryItem>()
+                .Query()
+                .Include(i => i.Item)
+                .FirstOrDefaultAsync(i => i.Id == inventoryItemId && i.CharacterId == characterId);
+
+            if (invItem == null) return NotFound();
+            if (!invItem.IsEquipped) return BadRequest("Item is not equipped");
+
+            // Снимаем бафф
+            ApplyItemBuff(character, invItem.Item, equip: false);
+
+            invItem.IsEquipped = false;
+            _unitOfWork.Repository<InventoryItem>().Update(invItem);
+            _unitOfWork.Repository<Character>().Update(character);
+            await _unitOfWork.SaveAsync();
+
+            return Ok(new { message = $"{invItem.Item.Name} unequipped" });
+        }
+
+        private static void ApplyItemBuff(Character character, Item item, bool equip)
+        {
+            int sign = equip ? 1 : -1;
+            switch (item.Type)
+            {
+                case DiceBound.Entities.Enums.ItemType.Weapon:
+                    character.AttackBonus += sign * item.Modifier;
+                    break;
+                case DiceBound.Entities.Enums.ItemType.Armor:
+                    character.ArmorClass += sign * item.Modifier;
+                    break;
+                case DiceBound.Entities.Enums.ItemType.Accessory:
+                    character.HP += sign * item.Modifier;
+                    break;
+            }
         }
 
         [HttpDelete("{characterId}/inventory/{inventoryItemId}")]
