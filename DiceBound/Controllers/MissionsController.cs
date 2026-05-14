@@ -52,7 +52,7 @@ namespace DiceBound.Controllers
         public async Task<IActionResult> Delete(Guid id)
             => Ok(await _missionService.DeleteAsync(id));
 
-        // ── REWARD ITEMS ──────────────────────────────
+        // REWARD ITEM
         // POST api/Missions/{missionId}/rewards  { itemId, quantity }
         [HttpPost("{missionId}/rewards")]
         [ProducesResponseType(typeof(MissionRewardItemDto), StatusCodes.Status200OK)]
