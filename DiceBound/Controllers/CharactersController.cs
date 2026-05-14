@@ -35,7 +35,7 @@ namespace DiceBound.Controllers
             return Ok(await _characterService.GetAllAsync());
         }
 
-        // ВАЖНО: "my" должен быть выше "{id}" чтобы не конфликтовать
+     
         [HttpGet("my")]
         [Authorize]
         [ProducesResponseType(typeof(List<CharacterDto>), StatusCodes.Status200OK)]
