@@ -1,3 +1,6 @@
+
+https://unsworn-cover-reply.ngrok-free.dev/swagger/index.html
+
 # 🎲 DiceBound Backend
 
 Backend API for the **DiceBound RPG system**, built with **ASP.NET Core Web API**.  
