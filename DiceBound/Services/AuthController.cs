@@ -71,10 +71,10 @@ public class AuthService : IAuthService
 
         var claims = new List<Claim>
         {
-            // 🔥 ГЛАВНЫЙ ID (ТО ЧТО ТЕБЕ НУЖНО ДЛЯ /my)
+            
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
 
-            // 🔥 стандарт JWT subject (очень важно)
+            
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
 
             // email
